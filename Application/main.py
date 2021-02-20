@@ -1,3 +1,10 @@
+'''
+	 Game data utilized in algorithm obtained from Retrosheet.org:
+	 	The information used here was obtained free of
+     	charge from and is copyrighted by Retrosheet.  Interested
+     	parties may contact Retrosheet at "www.retrosheet.org".
+'''
+
 __version__ = 1.0
 
 import os
