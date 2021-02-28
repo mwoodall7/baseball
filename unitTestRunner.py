@@ -9,7 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'GeneralHelpers'))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'Application'))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'Tests'))
 
-from GeneralHelpers.recordKeeper import RecordKeeper
+from GeneralHelpers.RecordKeeper import RecordKeeper
 
 
 def discoverTestSuites():

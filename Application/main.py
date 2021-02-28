@@ -1,11 +1,11 @@
 '''
-	 Game data utilized in algorithm obtained from Retrosheet.org:
-	 	The information used here was obtained free of
-     	charge from and is copyrighted by Retrosheet.  Interested
-     	parties may contact Retrosheet at "www.retrosheet.org".
+Copyright © sparePartsBud on Github. All Worldwide Rights Reserved.
+This material is the property of Matthew Woodall a.k.a. sparePartsBud on Github.
+All use, alterations, disclosure, dissemination, and/or reproduction not specifically
+authorized by sparePartsBud is prohibited.
 '''
 
-__version__ = 1.0
+__version__ = "0.0.0"
 
 import os
 import sys
