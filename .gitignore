@@ -1,5 +1,6 @@
 # Test Results
 TestResults/
+Application/GenerateData/Data
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
