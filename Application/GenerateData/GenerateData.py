@@ -38,6 +38,7 @@ def main(dataDir):
                 dataWriter = csv.writer(file, delimiter=' ')
                 records = getWinLossRecords(homeId, awayId, dayStandingsFormat)
                 dataWriter.writerow(records)
+                boxscore = statsapi.boxscore_data(gamePk=gameID)
 
 
 
@@ -75,22 +76,28 @@ def getWinLossRecords(homeID, awayID, dayFormatted):
     return [homeW, homeL, awayW, awayL]
 
 
-def getLineupIds(gameID):
-    homePlayers = None
-    awayPlayers = None
-    boxscore = None
-    try:
-        boxscore = statsapi.boxscore_data(gamePk=gameID)
-    except requests.exceptions.HTTPError:
-        pass
-    if boxscore:
-        homeTeamBox = boxscore['home']
-        awayTeamBox = boxscore['away']
-        homePlayers = homeTeamBox['battingOrder']
-        homePlayers.append(homeTeamBox['pitchers'][0])
-        awayPlayers = awayTeamBox['battingOrder']
-        awayPlayers.append(awayTeamBox['pitchers'][0])
+def getLineupIds(boxscore):
+    homeTeamBox = boxscore['home']
+    awayTeamBox = boxscore['away']
+    homePlayers = homeTeamBox['battingOrder']
+    homePlayers.append(homeTeamBox['pitchers'][0])
+    awayPlayers = awayTeamBox['battingOrder']
+    awayPlayers.append(awayTeamBox['pitchers'][0])
     return homePlayers, awayPlayers
+
+
+def matchLineupWithPositions(players, teamType, boxscore):
+    team = {}
+    for player in players:
+        id = 'ID' + str(player)
+        try:
+            position = boxscore[teamType]['players'][id]['position']['abbreviation']
+        except KeyError:
+            team = {}
+            break
+        if player not in team and not (position == 'PH' or (position == 'P' and player != players[-1])):
+            team[player] = position
+    return team
 
 
 def grabPositionPlayerData():
