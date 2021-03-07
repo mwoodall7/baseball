@@ -1,10 +1,16 @@
 import sys
 import unittest
 import statsapi
+from datetime import date
 
 from Application.GenerateData.GenerateData import getWinLossRecords
 from Application.GenerateData.GenerateData import getLineupIds
 from Application.GenerateData.GenerateData import matchLineupWithPositions
+from Application.GenerateData.GenerateData import getPositionPlayerData
+from Application.GenerateData.GenerateData import getBattingData
+from Application.GenerateData.GenerateData import getPitcherData
+
+OPENING_DAY = date(year=2021, month=4, day=1)
 
 
 class TestGenerateData(unittest.TestCase):
@@ -35,6 +41,28 @@ class TestGenerateData(unittest.TestCase):
         self.gameID2AwayPositions = ['2B', 'LF', 'CF', '1B', 'RF', '3B', 'SS', 'PH', 'C', 'P']
         self.gameID2AwayLineupPositions = dict(zip(self.gameID2Away, self.gameID2AwayPositions))
         self.gameID2AwayLineupPositions.pop(466320, None)
+
+        # These values are going to need to be focused on length and datatype
+        # over exact values as the career stats will update with new games
+        self.AdamWainwrightID = 425794
+        self.AdamWainwrightData = statsapi.player_stat_data(personId=self.AdamWainwrightID, type='career')
+        self.AdamWainwrightPitching = ['393', '326', '2597', '1933', '876', '428', '38', '176', '1830', '591', '36', '2066', '64', '.252', '8200', '.306', '1.098', '1.403', '41', '56', '.577', '216', '33583', '3.38', '2169.1', '167', '98', '3', '5', '17', '815', '1.22', '9001', '393', '24', '10', '21585', '64.3', '64', '3', '41', '4', '1.34', '.630', '15.5', '13', '3.10', '7.59', '2.45', '8.57', '5.29', '0.73', '15', '4', '96', '50']
+        self.AdamWainwrightHitting = ['391', '247', '149', '54', '37', '2', '10', '224', '24', '0', '136', '0', '.199', '685', '.225', '.302', '.527', '2', '0', '.000', '9', '2610', '772', '207', '71', '338', '60', '3', '.278', '1.66', '68.50']
+        self.AdamWainwrightFielding = ['280', '191', '8', '479', '.983', '1.20', '2169.1', '393', '326', '26']
+        self.AdamWainwrightPositionData = self.AdamWainwrightHitting.copy()
+        for stat in self.AdamWainwrightFielding:
+            self.AdamWainwrightPositionData.append(stat)
+
+        self.TylerONeillID = 641933
+        self.TylerONeillData = statsapi.player_stat_data(personId=self.TylerONeillID, type='career')
+        self.TylerONeillHitting = ['171', '65', '101', '67', '16', '0', '21', '153', '32', '0', '94', '5', '.229', '410', '.291', '.422', '.713', '1', '6', '.857', '6', '1802', '450', '173', '58', '195', '0', '3', '.305', '0.64', '19.52']
+        self.TylerONeillFieldingLF = ['1', '149', '3', '153', '.980', '1.55', '701.0', '97', '80', '0']
+        self.TylerONeillFieldingCF = ['0', '7', '1', '8', '.875', '1.17', '43.2', '6', '6', '0']
+        self.TylerONeillPositionData = self.TylerONeillHitting.copy()
+        self.TylerONeillNewPositionData = self.TylerONeillHitting.copy()
+        for stat in self.TylerONeillFieldingLF:
+            self.TylerONeillPositionData.append(stat)
+            self.TylerONeillNewPositionData.append('0')
 
 
 ################################################################################
@@ -142,3 +170,89 @@ class TestGenerateData(unittest.TestCase):
         else:
             success = False
         return success
+
+################################################################################
+# getPositionPlayerData - pass in the player data and position and return a list
+# of strings representing the hitting and then fielding stats for a player a the
+# specified position.
+#
+# Use Cases:
+# 1. valid player data returns the hitting and fielding data in a single list
+# 2. invalid player data returns an empty list
+# 3. position required not present in list returns a list of 0's since it would
+#    be the first time the player is starting in that fielding position
+#
+################################################################################
+
+    @unittest.skipIf(date.today() >= OPENING_DAY, "2021 season has started. Career stats are now dynamic.")
+    def test_getPositionPlayerData_validPlayerData(self):
+        self.assertEqual(self.AdamWainwrightPositionData, getPositionPlayerData(self.AdamWainwrightData, 'P'))
+        self.assertEqual(self.TylerONeillPositionData, getPositionPlayerData(self.TylerONeillData, 'LF'))
+
+
+    def test_getPositionPlayerData_validPlayerDataSize(self):
+        self.assertEqual(41, len(getPositionPlayerData(self.AdamWainwrightData, 'P')))
+        self.assertEqual(41, len(getPositionPlayerData(self.TylerONeillData, 'LF')))
+
+
+    def test_getPositionPlayerData_invalidData(self):
+        self.assertEqual([], getPositionPlayerData({}, 'P'))
+        self.assertEqual([], getPositionPlayerData({'stuff': None}, 'C'))
+        self.assertEqual([], getPositionPlayerData({'stats': None}, 'LF'))
+
+
+    @unittest.skipIf(date.today() >= OPENING_DAY, "2021 season has started. Career stats are now dynamic.")
+    def test_getPositionPlayerData_neededPositionMissing(self):
+        self.assertEqual(self.TylerONeillNewPositionData, getPositionPlayerData(self.TylerONeillData, 'C'))
+
+################################################################################
+# getBattingData - pass in the player data and return a list of the strings
+# representing the hitting data for the player
+#
+# Use Cases:
+# 1. valid player data returns the hitting data in a single list
+# 2. invalid player data returns an empty list
+#
+################################################################################
+
+    @unittest.skipIf(date.today() >= OPENING_DAY, "2021 season has started. Career stats are now dynamic.")
+    def test_getBattingData_validPlayerData(self):
+        self.assertEqual(self.AdamWainwrightHitting, getBattingData(self.AdamWainwrightData))
+        self.assertEqual(self.TylerONeillHitting, getBattingData(self.TylerONeillData))
+
+
+    def test_getBattingData_validPlayerDataSize(self):
+        self.assertEqual(31, len(getBattingData(self.AdamWainwrightData)))
+        self.assertEqual(31, len(getBattingData(self.TylerONeillData)))
+
+
+    def test_getBattingData_invalidData(self):
+        self.assertEqual([], getBattingData({}))
+        self.assertEqual([], getBattingData({'stuff':None}))
+        self.assertEqual([], getBattingData({'stats': None}))
+
+################################################################################
+# getPitcherData - pass in the player data and return a list of the strings
+# representing the pitching data for the player
+#
+# Use Cases:
+# 1. valid player data returns the pitching data in a single list
+# 2. invalid player data returns an empty list
+#
+################################################################################
+
+    @unittest.skipIf(date.today() >= OPENING_DAY, "2021 season has started. Career stats are now dynamic.")
+    def test_getPitcherData_validPlayerData(self):
+        self.assertEqual(self.AdamWainwrightPitching, getPitcherData(self.AdamWainwrightData))
+
+
+    def test_getPitcherData_validPlayerDataSize(self):
+        self.assertEqual(56, len(getPitcherData(self.AdamWainwrightData)))
+        self.assertEqual(0, len(getPitcherData(self.TylerONeillData)))
+
+
+    def test_getPlayerData_invalidData(self):
+        self.assertEqual([], getPitcherData(self.TylerONeillData))
+        self.assertEqual([], getPitcherData({}))
+        self.assertEqual([], getPitcherData({'stuff':None}))
+        self.assertEqual([], getPitcherData({'stats':None}))
