@@ -18,7 +18,7 @@ def main():
     dayDelta = timedelta(days=1)
     # day = date.today()
     day = date(year=2019, month=8, day=10)
-    numDays = 2
+    numDays = 1
     for _ in range (numDays):
         print(f"Generating game logs for {day}")
         dayTimeStart = time.time()
@@ -51,6 +51,7 @@ def main():
                     useDH = len(teams[0]) == 10
 
                     for team in teams:
+                        playerCount = 1
                         for playerID, position in team.items():
                             playerData = statsapi.player_stat_data(personId=playerID, type='career')
                             if position == 'P' and useDH:
@@ -63,7 +64,9 @@ def main():
                                 generalStats = getBattingData(playerData)
                             else:
                                 generalStats = getPositionPlayerData(playerData, position)
+                            print(f"GameID: {gameID}, Player Count: {playerCount}, PlayerID: {playerID}, Position: {position}, stats: {generalStats}")
                             dataWriter.writerow(generalStats)
+                            playerCount += 1
                         dataWriter.writerow(pitchingStats)
                 print(f"Completed game in {time.time() - gameTimeStart:.3f} sec. Completed {gameCount}/{numGames} games")
                 gameCount += 1
@@ -132,26 +135,26 @@ def getPositionPlayerData(playerData, position):
         for statType in playerData['stats']:
             if statType['group'] == 'hitting':
                 for _, statValue in statType['stats'].items():
-                    hittingData.append(str(statValue))
+                    appendValidData(hittingData, str(statValue))
             elif statType['group'] == 'fielding':
                 if statType['stats']['position']['abbreviation'] == position:
                     for statName, statValue in statType['stats'].items():
                         if statName == 'position':
                             continue
                         else:
-                            fieldingData.append(str(statValue))
+                            appendValidData(fieldingData, str(statValue))
     except KeyError:
         pass
     except TypeError:
         pass
     if hittingData and fieldingData:
         for stat in hittingData:
-            generalStats.append(stat)
+            appendValidData(generalStats, stat)
         for stat in fieldingData:
-            generalStats.append(stat)
+            appendValidData(generalStats, stat)
     elif hittingData and not fieldingData:
         for stat in hittingData:
-            generalStats.append(stat)
+            appendValidData(generalStats, stat)
         for num in range(10):
             generalStats.append('0')
     return generalStats
@@ -171,7 +174,7 @@ def getData(playerData, type):
         for statType in playerData['stats']:
             if statType['group'] == type:
                 for _, statValue in statType['stats'].items():
-                    data.append(str(statValue))
+                    appendValidData(data, str(statValue))
                 if len(data) > 0:
                     break
     except KeyError:
@@ -179,6 +182,15 @@ def getData(playerData, type):
     except TypeError:
         data = []
     return data
+
+
+def appendValidData(dataList, value):
+    if value.isnumeric():
+        dataList.append(value)
+    elif value.lstrip('-').replace('.', '', 1).isdigit():
+        dataList.append(value)
+    else:
+        dataList.append('0')
 
 
 if __name__ == '__main__':

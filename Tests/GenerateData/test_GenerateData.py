@@ -9,6 +9,7 @@ from Application.GenerateData.GenerateData import matchLineupWithPositions
 from Application.GenerateData.GenerateData import getPositionPlayerData
 from Application.GenerateData.GenerateData import getBattingData
 from Application.GenerateData.GenerateData import getPitcherData
+from Application.GenerateData.GenerateData import appendValidData
 
 OPENING_DAY = date(year=2021, month=4, day=1)
 
@@ -256,3 +257,33 @@ class TestGenerateData(unittest.TestCase):
         self.assertEqual([], getPitcherData({}))
         self.assertEqual([], getPitcherData({'stuff':None}))
         self.assertEqual([], getPitcherData({'stats':None}))
+
+################################################################################
+# appendValidData - pass in the list to append data to and the value to append
+#
+# Use Cases:
+# 1. value is a valid string representation of a numeric value
+# 2. value is not numeric
+#
+################################################################################
+
+    def test_appendValidData_validNumericValue(self):
+        dataList = []
+        appendValidData(dataList, '10')
+        self.assertEqual(['10'], dataList)
+        appendValidData(dataList, '0')
+        self.assertEqual(['10', '0'], dataList)
+        appendValidData(dataList, '0.456')
+        self.assertEqual(['10', '0', '0.456'], dataList)
+        appendValidData(dataList, '12345')
+        self.assertEqual(['10', '0', '0.456', '12345'], dataList)
+
+
+    def test_appendValidData_nonNumericValue(self):
+        dataList = []
+        appendValidData(dataList, '-.--')
+        self.assertEqual(['0'], dataList)
+        appendValidData(dataList, 'stuff')
+        self.assertEqual(['0', '0'], dataList)
+        appendValidData(dataList, 'NotANumber1234')
+        self.assertEqual(['0', '0', '0'], dataList)
