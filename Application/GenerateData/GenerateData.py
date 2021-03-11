@@ -6,7 +6,6 @@ authorized by mwoodall7 is prohibited.
 
 '''
 import os
-
 import sys
 import csv
 import statsapi
