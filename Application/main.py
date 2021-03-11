@@ -1,11 +1,13 @@
 '''
-	 Game data utilized in algorithm obtained from Retrosheet.org:
-	 	The information used here was obtained free of
-     	charge from and is copyrighted by Retrosheet.  Interested
-     	parties may contact Retrosheet at "www.retrosheet.org".
+Copyright © Matthew Woodall (mwoodall7 on Github). All Worldwide Rights Reserved.
+This material is the property of Matthew Woodall a.k.a. mwoodall7 on Github.
+All use, alterations, disclosure, dissemination, and/or reproduction not specifically
+authorized by mwoodall7 is prohibited.
+
 '''
 
-__version__ = 1.0
+__version__ = "1.0.0"
+
 
 import os
 import sys

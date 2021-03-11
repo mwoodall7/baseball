@@ -1,6 +1,15 @@
+'''
+Copyright © Matthew Woodall (mwoodall7 on Github). All Worldwide Rights Reserved.
+This material is the property of Matthew Woodall a.k.a. mwoodall7 on Github.
+All use, alterations, disclosure, dissemination, and/or reproduction not specifically
+authorized by mwoodall7 is prohibited.
+
+'''
 from datetime import datetime
+
 import os
 import sys
+import time
 import unittest
 
 # Required to update PYTHONPATH for runner to have access to classes within project
@@ -9,7 +18,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'GeneralHelpers'))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'Application'))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'Tests'))
 
-from GeneralHelpers.recordKeeper import RecordKeeper
+from GeneralHelpers.RecordKeeper import RecordKeeper
 
 
 def discoverTestSuites():
@@ -59,20 +68,16 @@ def main():
 
     testStartTime = datetime.now()
 
-    resultFileName = 'unitTestResults_{}_{}_{}_{}_{}_{}.log'.format(testStartTime.year,
-                                                                    testStartTime.month,
-                                                                    testStartTime.day,
-                                                                    testStartTime.hour,
-                                                                    testStartTime.minute,
-                                                                    testStartTime.second)
+    resultFileName = f'unitTestResults_{testStartTime.year}_{testStartTime.month}_{testStartTime.day}_{testStartTime.hour}_{testStartTime.minute}_{testStartTime.second}.log'
 
     resultFile = open(os.path.join(resultDir, resultFileName), 'w+')
     resultFile.write('**************************************************\n' +
-                     '{} - Unit Test Results\n'.format(datetime.today()) +
+                     f'{datetime.today()} - Unit Test Results\n' +
                      '**************************************************\n')
 
     suiteResults = {}
 
+    testRunTimeStart = time.time()
     testSuites = discoverTestSuites()
     for suiteDir, testList in testSuites.items():
         if testList:
@@ -80,11 +85,12 @@ def main():
             resultFile.write('\nTest Suite: {}\n\n'.format(suiteName))
             suiteModules = importTestSuiteModules(suiteDir, testList)
             suiteResults[suiteName] = runTestSuite(suiteModules, resultFile)
+    testTimeElapse = time.time() - testRunTimeStart
 
     if all([suiteResult.wasSuccessful() for suiteResult in suiteResults.values()]):
-        print("All tests PASSED!")
+        print(f"All tests PASSED! Run Time: {testTimeElapse:.3f} sec")
     else:
-        print("FAIL. Check log file in TestResults directory for specific failure information: {}".format(resultFileName))
+        print(f"FAIL. Check log file in TestResults directory for specific failure information: {resultFileName}.\nRun Time: {testTimeElapse:.3f} sec")
 
     resultFile.close()
 
