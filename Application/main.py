@@ -6,7 +6,8 @@ All use, alterations, disclosure, dissemination, and/or reproduction not specifi
 authorized by sparePartsBud is prohibited.
 '''
 
-__version__ = "0.0.0"
+__version__ = "1.0.0"
+
 
 import os
 import sys
