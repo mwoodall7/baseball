@@ -3,7 +3,8 @@ Copyright © Matthew Woodall (mwoodall7 on Github). All Worldwide Rights Reserve
 This material is the property of Matthew Woodall a.k.a. mwoodall7 on Github.
 
 All use, alterations, disclosure, dissemination, and/or reproduction not specifically
-authorized by sparePartsBud is prohibited.
+authorized by mwoodall7 is prohibited.
+
 '''
 import os
 
