@@ -6,7 +6,6 @@ authorized by mwoodall7 is prohibited.
 
 '''
 import sys
-
 import unittest
 import statsapi
 from datetime import date
