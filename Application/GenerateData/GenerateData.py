@@ -16,9 +16,10 @@ def main():
 
     dataCollectionRunTimeStart = time.time()
     dayDelta = timedelta(days=1)
-    # day = date.today()
-    day = date(year=2019, month=8, day=10)
-    numDays = 1
+    day = date.today()
+    numDays = 3000
+    totalGames = 0
+    totalSuccessfulGames = 0
     for _ in range (numDays):
         print(f"Generating game logs for {day}")
         dayTimeStart = time.time()
@@ -29,6 +30,7 @@ def main():
         if numGames != 0:
             gameCount = 1
             for game in games:
+                totalGames += 1
                 gameTimeStart = time.time()
                 print(f"Starting game {gameCount}/{numGames}")
                 gameID = game['game_id']
@@ -38,41 +40,42 @@ def main():
                 homeScore = game['home_score']
                 awayName = game['away_name']
                 homeName = game['home_name']
-
-                dataLogName = "{}_{}_{}_{}_{}.csv".format(homeScore, awayScore, homeName, awayName, day)
-
-                with open(os.path.join(dataDir, dataLogName), "w+", newline='') as file:
-                    dataWriter = csv.writer(file, delimiter=' ')
-                    records = getWinLossRecords(homeId, awayId, dayStandingsFormat)
-                    dataWriter.writerow(records)
-                    boxscore = statsapi.boxscore_data(gamePk=gameID)
-                    homePlayers, awayPlayers = getLineupIds(boxscore)
-                    teams = [matchLineupWithPositions(homePlayers, 'home', boxscore), matchLineupWithPositions(awayPlayers, 'away', boxscore)]
-                    useDH = len(teams[0]) == 10
-
-                    for team in teams:
-                        playerCount = 1
-                        for playerID, position in team.items():
-                            playerData = statsapi.player_stat_data(personId=playerID, type='career')
-                            if position == 'P' and useDH:
-                                pitchingStats = getPitcherData(playerData)
-                                continue
-                            elif position == 'P' and not useDH:
-                                generalStats = getPositionPlayerData(playerData, position)
-                                pitchingStats = getPitcherData(playerData)
-                            elif position == 'DH':
-                                generalStats = getBattingData(playerData)
-                            else:
-                                generalStats = getPositionPlayerData(playerData, position)
-                            print(f"GameID: {gameID}, Player Count: {playerCount}, PlayerID: {playerID}, Position: {position}, stats: {generalStats}")
-                            dataWriter.writerow(generalStats)
-                            playerCount += 1
-                        dataWriter.writerow(pitchingStats)
+                boxscore = statsapi.boxscore_data(gamePk=gameID)
+                homePlayers, awayPlayers = getLineupIds(boxscore)
+                teams = [matchLineupWithPositions(homePlayers, 'home', boxscore), matchLineupWithPositions(awayPlayers, 'away', boxscore)]
+                proceed = len(teams[0]) == len(teams[1])
+                if proceed:
+                    dataLogName = "{}_{}_{}_{}_{}.csv".format(homeScore, awayScore, homeName, awayName, day)
+                    with open(os.path.join(dataDir, dataLogName), "w+", newline='') as file:
+                        dataWriter = csv.writer(file, delimiter=' ')
+                        records = getWinLossRecords(homeId, awayId, dayStandingsFormat)
+                        dataWriter.writerow(records)
+                        useDH = len(teams[0]) == 10
+                        for team in teams:
+                            playerCount = 1
+                            for playerID, position in team.items():
+                                playerData = statsapi.player_stat_data(personId=playerID, type='career')
+                                if position == 'P' and useDH:
+                                    pitchingStats = getPitcherData(playerData)
+                                    continue
+                                elif position == 'P' and not useDH:
+                                    generalStats = getPositionPlayerData(playerData, position)
+                                    pitchingStats = getPitcherData(playerData)
+                                elif position == 'DH':
+                                    generalStats = getBattingData(playerData)
+                                else:
+                                    generalStats = getPositionPlayerData(playerData, position)
+                                dataWriter.writerow(generalStats)
+                                playerCount += 1
+                            dataWriter.writerow(pitchingStats)
+                    totalSuccessfulGames += 1
+                else:
+                    print(f"Invalid data retrieved for teams. Cannot generate valid data file with this game.")
                 print(f"Completed game in {time.time() - gameTimeStart:.3f} sec. Completed {gameCount}/{numGames} games")
                 gameCount += 1
         print(f"Completed {numGames} games for {day} in {time.time() - dayTimeStart:.3f} sec")
         day -= dayDelta
-    print(f"Completed data collection in {time.time() - dataCollectionRunTimeStart:.3f} sec")
+    print(f"Completed data collection in {time.time() - dataCollectionRunTimeStart:.3f} sec.\nTotal Number of Game Data Collected: {totalSuccessfulGames}/{totalGames}")
 
 
 def getWinLossRecords(homeID, awayID, dayFormatted):
