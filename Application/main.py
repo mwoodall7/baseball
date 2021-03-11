@@ -1,6 +1,7 @@
 '''
 Copyright © Matthew Woodall (mwoodall7 on Github). All Worldwide Rights Reserved.
-This material is the property of Matthew Woodall a.k.a. sparePartsBud on Github.
+This material is the property of Matthew Woodall a.k.a. mwoodall7 on Github.
+
 All use, alterations, disclosure, dissemination, and/or reproduction not specifically
 authorized by sparePartsBud is prohibited.
 '''
