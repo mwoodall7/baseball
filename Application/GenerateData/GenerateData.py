@@ -23,14 +23,19 @@ def main():
 
     dataCollectionRunTimeStart = time.time()
     dayDelta = timedelta(days=1)
-    day = date.today()
-    numDays = 3000
+    day = date(year=2010, month=3, day=2)
+    numDays = 1800
     totalGames = 0
     totalSuccessfulGames = 0
     for _ in range (numDays):
         print(f"Generating game logs for {day}")
         dayTimeStart = time.time()
-        games = statsapi.schedule(date=day)
+        try:
+            games = statsapi.schedule(date=day)
+        except requests.exceptions.HTTPError:
+            print(f"Unable to connect to server properly. Skipping day: {day}")
+            day -= dayDelta
+            continue
         dayStandingsFormat = day.__format__("%m/%d/%Y")
         numGames = len(games)
 
@@ -49,10 +54,14 @@ def main():
                 homeName = game['home_name']
                 boxscore = statsapi.boxscore_data(gamePk=gameID)
                 homePlayers, awayPlayers = getLineupIds(boxscore)
-                teams = [matchLineupWithPositions(homePlayers, 'home', boxscore), matchLineupWithPositions(awayPlayers, 'away', boxscore)]
-                proceed = len(teams[0]) == len(teams[1])
+                if homePlayers and awayPlayers:
+                    teams = [matchLineupWithPositions(homePlayers, 'home', boxscore), matchLineupWithPositions(awayPlayers, 'away', boxscore)]
+                    proceed = len(teams[0]) == len(teams[1])
+                else:
+                    proceed = False
                 if proceed:
                     dataLogName = "{}_{}_{}_{}_{}.csv".format(homeScore, awayScore, homeName, awayName, day)
+                    goodPlayer = False
                     with open(os.path.join(dataDir, dataLogName), "w+", newline='') as file:
                         dataWriter = csv.writer(file, delimiter=' ')
                         records = getWinLossRecords(homeId, awayId, dayStandingsFormat)
@@ -61,7 +70,12 @@ def main():
                         for team in teams:
                             playerCount = 1
                             for playerID, position in team.items():
-                                playerData = statsapi.player_stat_data(personId=playerID, type='career')
+                                try:
+                                    playerData = statsapi.player_stat_data(personId=playerID, type='career')
+                                    goodPlayer = True
+                                except KeyError:
+                                    print("Invalid key when locating player data. Cannot complete game data.")
+                                    break
                                 if position == 'P' and useDH:
                                     pitchingStats = getPitcherData(playerData)
                                     continue
@@ -74,8 +88,13 @@ def main():
                                     generalStats = getPositionPlayerData(playerData, position)
                                 dataWriter.writerow(generalStats)
                                 playerCount += 1
+                            if not goodPlayer: break
                             dataWriter.writerow(pitchingStats)
-                    totalSuccessfulGames += 1
+                    if goodPlayer:
+                        totalSuccessfulGames += 1
+                    else:
+                        if os.path.exists(os.path.join(dataDir, dataLogName)):
+                            os.remove(os.path.join(dataDir, dataLogName))
                 else:
                     print(f"Invalid data retrieved for teams. Cannot generate valid data file with this game.")
                 print(f"Completed game in {time.time() - gameTimeStart:.3f} sec. Completed {gameCount}/{numGames} games")
@@ -117,9 +136,14 @@ def getLineupIds(boxscore):
     homeTeamBox = boxscore['home']
     awayTeamBox = boxscore['away']
     homePlayers = homeTeamBox['battingOrder']
-    homePlayers.append(homeTeamBox['pitchers'][0])
-    awayPlayers = awayTeamBox['battingOrder']
-    awayPlayers.append(awayTeamBox['pitchers'][0])
+    try:
+        homePlayers.append(homeTeamBox['pitchers'][0])
+        awayPlayers = awayTeamBox['battingOrder']
+        awayPlayers.append(awayTeamBox['pitchers'][0])
+    except IndexError:
+        print("Invalid pitcher's list. Invalid lineups.")
+        homePlayers = []
+        awayPlayers = []
     return homePlayers, awayPlayers
 
 
